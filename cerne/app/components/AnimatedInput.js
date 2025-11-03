@@ -1,6 +1,9 @@
-import { colors } from '../theme';
 import React, { useState, useRef, useEffect } from 'react';
 import { Animated, TextInput, View, StyleSheet, Platform } from 'react-native';
+import { colors } from '../theme';
+
+const INPUT_HEIGHT = 48; // manter consistente com os outros estilos
+const FONT_SIZE = 16;
 
 export default function AnimatedInput({ label, value, onFocus, onBlur, style, ...rest }) {
   const [isFocused, setIsFocused] = useState(false);
@@ -26,15 +29,29 @@ export default function AnimatedInput({ label, value, onFocus, onBlur, style, ..
         value={value}
         onFocus={(e) => { setIsFocused(true); onFocus && onFocus(e); }}
         onBlur={(e) => { setIsFocused(false); onBlur && onBlur(e); }}
+        // centralização vertical confiável:
+        includeFontPadding={false}
+        textAlignVertical="center"
         style={[styles.input, style]}
-        placeholder={undefined}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { width: '100%', marginBottom: 12, position: 'relative' },
+  // define altura fixa e centraliza conteúdo verticalmente
+  container: { width: '100%', marginBottom: 12, position: 'relative', height: INPUT_HEIGHT, justifyContent: 'center' },
   label: { position: 'absolute', left: 12, top: Platform.OS === 'web' ? 10 : 12, color: colors.textMuted, fontSize: 14, backgroundColor: colors.background, paddingHorizontal: 4 },
-  input: { height: 48, borderWidth: 1, borderColor: colors.border, borderRadius: 8, paddingHorizontal: 12, paddingTop: 18, backgroundColor: colors.surface, color: colors.text },
+  input: {
+    height: INPUT_HEIGHT,
+    lineHeight: INPUT_HEIGHT,       // força o texto a ficar verticalmente centralizado (especialmente Android)
+    fontSize: FONT_SIZE,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 0,             // evita deslocamento por padding
+    backgroundColor: colors.surface,
+    color: colors.text,
+  },
 });
