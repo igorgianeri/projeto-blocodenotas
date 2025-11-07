@@ -830,7 +830,7 @@ O uso de **temas centralizados**, **guards de autenticação** e **componentes r
 
 ---
 
-**Desenvolvido por:** Igor Gianeri  
+**Desenvolvido por:** Igor Gianeri, Eduardo Romanini e Lucas Cruz
 **Repositório:** projeto-blocodenotas  
 **Branch:** igor  
 **Data:** Novembro 2025
