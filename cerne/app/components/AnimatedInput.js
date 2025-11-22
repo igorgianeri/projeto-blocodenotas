@@ -5,7 +5,7 @@ import { colors } from '../theme';
 const INPUT_HEIGHT = 48; // manter consistente com os outros estilos
 const FONT_SIZE = 16;
 
-export default function AnimatedInput({ label, value, onFocus, onBlur, style, ...rest }) {
+export default function AnimatedInput({ label, value, onFocus, onBlur, style, placeholder, ...rest }) {
   const [isFocused, setIsFocused] = useState(false);
   const animated = useRef(new Animated.Value(value && value.toString().length ? 1 : 0)).current;
 
@@ -15,7 +15,7 @@ export default function AnimatedInput({ label, value, onFocus, onBlur, style, ..
 
   const labelStyle = {
     transform: [
-      { translateY: animated.interpolate({ inputRange: [0, 1], outputRange: [0, -20] }) },
+      { translateY: animated.interpolate({ inputRange: [0, 1], outputRange: [0, -28] }) },
       { scale: animated.interpolate({ inputRange: [0, 1], outputRange: [1, 0.85] }) },
     ],
     opacity: animated.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1] }),
@@ -27,6 +27,7 @@ export default function AnimatedInput({ label, value, onFocus, onBlur, style, ..
       <TextInput
         {...rest}
         value={value}
+        placeholder={isFocused ? placeholder : ''}
         onFocus={(e) => { setIsFocused(true); onFocus && onFocus(e); }}
         onBlur={(e) => { setIsFocused(false); onBlur && onBlur(e); }}
         // centralização vertical confiável:
@@ -40,17 +41,17 @@ export default function AnimatedInput({ label, value, onFocus, onBlur, style, ..
 
 const styles = StyleSheet.create({
   // define altura fixa e centraliza conteúdo verticalmente
-  container: { width: '100%', marginBottom: 12, position: 'relative', height: INPUT_HEIGHT, justifyContent: 'center' },
-  label: { position: 'absolute', left: 12, top: Platform.OS === 'web' ? 10 : 12, color: colors.textMuted, fontSize: 14, backgroundColor: colors.background, paddingHorizontal: 4 },
+  container: { width: '100%', marginBottom: 20, position: 'relative', height: INPUT_HEIGHT, justifyContent: 'center' },
+  label: { position: 'absolute', left: 16, top: Platform.OS === 'web' ? 14 : 14, color: colors.textMuted, fontSize: 14, backgroundColor: colors.background, paddingHorizontal: 4, zIndex: 1 },
   input: {
     height: INPUT_HEIGHT,
-    lineHeight: INPUT_HEIGHT,       // força o texto a ficar verticalmente centralizado (especialmente Android)
     fontSize: FONT_SIZE,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 0,             // evita deslocamento por padding
+    paddingTop: 0,
+    paddingBottom: 0,
     backgroundColor: colors.surface,
     color: colors.text,
   },
