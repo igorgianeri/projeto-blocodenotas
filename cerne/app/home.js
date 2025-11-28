@@ -31,7 +31,6 @@ export default function Home() {
   const [drawingStrokes, setDrawingStrokes] = useState([]);
   const [selectedNote, setSelectedNote] = useState(null);
 
-  // 🔹 Verifica usuário autenticado
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       if (u) {
@@ -44,22 +43,18 @@ export default function Home() {
     return unsubscribe;
   }, [router]);
 
-  // 🔹 Carrega notas do Firestore
   async function loadNotes(uid) {
     try {
-      // Evita índice composto exigido pelo Firestore ao usar where + orderBy.
       const q = query(collection(db, "notes"), where("uid", "==", uid));
       const querySnapshot = await getDocs(q);
       const loadedNotes = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-      // Ordenação local por createdAt (número, timestamp ou string ISO)
       const getCreatedAt = (n) => {
         const v = n.createdAt;
         if (!v) return 0;
         if (typeof v === "number") return v;
         if (typeof v === "string") return Date.parse(v) || 0;
         if (v && typeof v === "object") {
-          // Firestore Timestamp { seconds, nanoseconds }
           if (typeof v.toDate === "function") return v.toDate().getTime();
           if (typeof v.seconds === "number") return v.seconds * 1000;
         }
@@ -72,7 +67,6 @@ export default function Home() {
     }
   }
 
-  // 🔹 Salvar nota de texto
   async function saveText() {
     if (!title.trim() && !textBody.trim()) {
       Alert.alert("Aviso", "Adicione um título ou escreva algo.");
@@ -112,7 +106,6 @@ export default function Home() {
     }
   }
 
-  // 🔹 Salvar desenho
   async function saveDrawing() {
     if (!drawingStrokes.length) {
       Alert.alert("Aviso", "Nenhum desenho criado.");
@@ -156,12 +149,10 @@ export default function Home() {
     }
   }
 
-  // 🔹 Logout
   function handleLogout() {
     signOut(auth);
   }
 
-  // 🔹 Renderizar item da lista
   function openForEdit(item) {
     setSelectedNote(item);
     if (item.type === "text") {
@@ -200,7 +191,6 @@ export default function Home() {
   async function performDelete(note) {
     try {
       await deleteDoc(doc(db, "notes", note.id));
-      // Limpar estado se estiver editando esta nota
       if (selectedNote && selectedNote.id === note.id) {
         setSelectedNote(null);
         setTitle("");
@@ -251,6 +241,33 @@ export default function Home() {
     }
 
     if (item.type === "drawing") {
+      const strokes = Array.isArray(item.strokes) ? item.strokes : [];
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      
+      strokes.forEach(stroke => {
+        if (Array.isArray(stroke.points)) {
+          stroke.points.forEach(p => {
+            if (p.x < minX) minX = p.x;
+            if (p.y < minY) minY = p.y;
+            if (p.x > maxX) maxX = p.x;
+            if (p.y > maxY) maxY = p.y;
+          });
+        }
+      });
+
+      if (minX === Infinity) {
+        minX = 0; minY = 0; maxX = 100; maxY = 100;
+      }
+
+      const margin = 20;
+      minX -= margin;
+      minY -= margin;
+      maxX += margin;
+      maxY += margin;
+
+      const contentWidth = maxX - minX;
+      const contentHeight = maxY - minY;
+      
       return (
         <View
           style={{
@@ -263,7 +280,7 @@ export default function Home() {
         >
           <TouchableOpacity
             onPress={() => confirmDelete(item)}
-            style={{ position: "absolute", right: 10, top: 10, padding: 6, zIndex: 2 }}
+            style={{ position: "absolute", right: 10, top: 10, padding: 6, zIndex: 2, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 5 }}
           >
             <Ionicons name="trash-outline" size={20} color="#c00" />
           </TouchableOpacity>
@@ -274,8 +291,8 @@ export default function Home() {
               </Text>
             ) : null}
             <View style={{ padding: 10 }}>
-              <Svg height="150" width="100%">
-                {Array.isArray(item.strokes) && item.strokes.map((s, i) => (
+              <Svg height="150" width="100%" viewBox={`${minX} ${minY} ${contentWidth} ${contentHeight}`} preserveAspectRatio="xMidYMid meet">
+                {strokes.map((s, i) => (
                   <Path
                     key={i}
                     d={`M ${s.points.map((p) => `${p.x} ${p.y}`).join(" L ")}`}
@@ -295,12 +312,15 @@ export default function Home() {
     return null;
   }
 
-  // 🔹 Fechar modais com confirmação
   function confirmCloseTextModal() {
-    const hasContent = title.trim() || textBody.trim();
-    if (hasContent) {
+    const isEditing = selectedNote && selectedNote.type === "text";
+    const hasChanges = isEditing 
+      ? (title.trim() !== (selectedNote.title || "").trim() || textBody.trim() !== (selectedNote.text || "").trim())
+      : (title.trim() || textBody.trim());
+
+    if (hasChanges) {
       if (Platform.OS === 'web') {
-        if (window.confirm('Deseja realmente cancelar esta nota?')) {
+        if (window.confirm('Deseja descartar as alterações?')) {
           setTitle("");
           setTextBody("");
           setSelectedNote(null);
@@ -308,12 +328,12 @@ export default function Home() {
         }
       } else {
         Alert.alert(
-          "Cancelar nota?",
-          "Deseja realmente cancelar esta nota?",
+          "Descartar alterações?",
+          "Deseja descartar as alterações?",
           [
-            { text: "Não", style: "cancel" },
+            { text: "Cancelar", style: "cancel" },
             {
-              text: "Sim",
+              text: "Descartar",
               style: "destructive",
               onPress: () => {
                 setTitle("");
@@ -327,29 +347,38 @@ export default function Home() {
         );
       }
     } else {
+      setTitle("");
+      setTextBody("");
       setSelectedNote(null);
       setTextModalOpen(false);
     }
   }
 
   function confirmCloseDrawingModal() {
-    if (drawingStrokes.length) {
+    const isEditing = selectedNote && selectedNote.type === "drawing";
+    const hasChanges = isEditing
+      ? (title.trim() !== (selectedNote.title || "").trim() || JSON.stringify(drawingStrokes) !== JSON.stringify(selectedNote.strokes || []))
+      : (drawingStrokes.length > 0);
+
+    if (hasChanges) {
       if (Platform.OS === 'web') {
-        if (window.confirm('Deseja realmente cancelar este desenho?')) {
+        if (window.confirm('Deseja descartar as alterações?')) {
+          setTitle("");
           setDrawingStrokes([]);
           setSelectedNote(null);
           setDrawingModalOpen(false);
         }
       } else {
         Alert.alert(
-          "Cancelar desenho?",
-          "Deseaja realmente cancelar este desenho?",
+          "Descartar alterações?",
+          "Deseja descartar as alterações?",
           [
-            { text: "Não", style: "cancel" },
+            { text: "Cancelar", style: "cancel" },
             {
-              text: "Sim",
+              text: "Descartar",
               style: "destructive",
               onPress: () => {
+                setTitle("");
                 setDrawingStrokes([]);
                 setSelectedNote(null);
                 setDrawingModalOpen(false);
@@ -360,6 +389,8 @@ export default function Home() {
         );
       }
     } else {
+      setTitle("");
+      setDrawingStrokes([]);
       setSelectedNote(null);
       setDrawingModalOpen(false);
     }
@@ -376,7 +407,7 @@ export default function Home() {
           backgroundColor: colors.primary,
         }}
       >
-  <Text style={{ color: colors.white, fontSize: 22, fontWeight: "bold" }}>
+        <Text style={{ color: colors.white, fontSize: 22, fontWeight: "bold" }}>
           Minhas Notas
         </Text>
         <TouchableOpacity onPress={handleLogout}>
@@ -391,7 +422,6 @@ export default function Home() {
         contentContainerStyle={{ padding: 20 }}
       />
 
-      {/* 🔹 Botões Flutuantes */}
       <View
         style={{
           position: "absolute",
@@ -423,7 +453,6 @@ export default function Home() {
         </TouchableOpacity>
       </View>
 
-      {/* 🔹 Modal de Texto */}
       <Modal visible={textModalOpen} animationType="slide">
         <SafeAreaView style={{ flex: 1, padding: 20 }}>
           <View
@@ -472,7 +501,6 @@ export default function Home() {
         </SafeAreaView>
       </Modal>
 
-      {/* 🔹 Modal de Desenho */}
       <Modal visible={drawingModalOpen} animationType="slide">
         <SafeAreaView style={{ flex: 1 }}>
           <View

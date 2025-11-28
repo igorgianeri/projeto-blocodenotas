@@ -17,7 +17,6 @@ const firebaseConfig = {
   appId: "1:569956541263:web:68ce13b25be8dc3d1b1b3a"
 };
 
-// Inicializar Firebase
 let app;
 try {
   app = getApp();
@@ -25,15 +24,12 @@ try {
   app = initializeApp(firebaseConfig);
 }
 
-// Obter serviços
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 
-// Configurar idioma
 auth.useDeviceLanguage();
 
-// Para debug
 if (process.env.NODE_ENV === 'development') {
   console.log('Firebase inicializado com config:', { 
     projectId: firebaseConfig.projectId,
@@ -43,10 +39,8 @@ if (process.env.NODE_ENV === 'development') {
 
 export async function registerWithEmail(name, email, password) {
   try {
-    // Criar usuário no Authentication
     const { user } = await createUserWithEmailAndPassword(auth, email, password);
     
-    // Salvar dados adicionais no Firestore
     await addDoc(collection(db, 'users'), {
       uid: user.uid,
       name,

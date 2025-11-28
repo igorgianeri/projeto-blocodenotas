@@ -25,7 +25,6 @@ export default function Login() {
       setLoading(true);
       const result = await loginWithEmail(email.trim(), password);
       if (result) {
-        // Salvar preferência de "lembrar-me"
         await AsyncStorage.setItem('@cerne_remember', remember ? '1' : '0');
         router.replace('/home');
       }
@@ -44,7 +43,7 @@ export default function Login() {
         value={email} 
         onChangeText={setEmail} 
         keyboardType="email-address"
-        style={{ textAlignVertical: 'center' }} // centraliza verticalmente placeholder e texto
+        style={{ textAlignVertical: 'center' }}
       />
 
       <View style={{ width: '100%', position: 'relative' }}>
@@ -53,7 +52,7 @@ export default function Login() {
           value={password} 
           onChangeText={setPassword} 
           secureTextEntry={!showPassword} 
-          style={{ textAlignVertical: 'center' }} // centraliza verticalmente placeholder e texto
+          style={{ textAlignVertical: 'center' }}
         />
         <Pressable style={styles.eye} onPress={() => setShowPassword(s => !s)}>
           <Ionicons name={showPassword ? 'eye' : 'eye-off'} size={20} color="#333" />
@@ -87,7 +86,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, alignItems: 'center', backgroundColor: colors.background },
   title: { fontSize: 22, fontWeight: '700', marginBottom: 12, color: colors.text },
   row: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
-  eye: { position: 'absolute', right: 12, top: 14, height: 20, justifyContent: 'center' }, // mantém o ícone centrado verticalmente
+  eye: { position: 'absolute', right: 12, top: 14, height: 20, justifyContent: 'center' },
   button: { 
     marginTop: 18, 
     backgroundColor: colors.primary, 

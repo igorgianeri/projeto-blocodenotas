@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Animated, TextInput, View, StyleSheet, Platform } from 'react-native';
 import { colors } from '../theme';
 
-const INPUT_HEIGHT = 48; // manter consistente com os outros estilos
+const INPUT_HEIGHT = 48;
 const FONT_SIZE = 16;
 
 export default function AnimatedInput({ label, value, onFocus, onBlur, style, placeholder, ...rest }) {
@@ -30,7 +30,6 @@ export default function AnimatedInput({ label, value, onFocus, onBlur, style, pl
         placeholder={isFocused ? placeholder : ''}
         onFocus={(e) => { setIsFocused(true); onFocus && onFocus(e); }}
         onBlur={(e) => { setIsFocused(false); onBlur && onBlur(e); }}
-        // centralização vertical confiável:
         includeFontPadding={false}
         textAlignVertical="center"
         style={[styles.input, style]}
@@ -40,7 +39,6 @@ export default function AnimatedInput({ label, value, onFocus, onBlur, style, pl
 }
 
 const styles = StyleSheet.create({
-  // define altura fixa e centraliza conteúdo verticalmente
   container: { width: '100%', marginBottom: 20, position: 'relative', height: INPUT_HEIGHT, justifyContent: 'center' },
   label: { position: 'absolute', left: 16, top: Platform.OS === 'web' ? 14 : 14, color: colors.textMuted, fontSize: 14, backgroundColor: colors.background, paddingHorizontal: 4, zIndex: 1 },
   input: {

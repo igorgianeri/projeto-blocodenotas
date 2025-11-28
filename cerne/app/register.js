@@ -3,9 +3,8 @@ import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import AnimatedInput from './components/AnimatedInput';
 import { useRouter } from 'expo-router';
 import { colors } from './theme';
-import { registerWithEmail, auth } from '../firebase.js';
+import { registerWithEmail, signOut } from '../firebase.js';
 import { Ionicons } from '@expo/vector-icons';
-import { onAuthStateChanged } from 'firebase/auth';
 
 export default function Register() {
   const router = useRouter();
@@ -14,16 +13,6 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  // Verificar se já está autenticado
-  React.useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        router.replace('/home');
-      }
-    });
-    return unsubscribe;
-  }, [router]);
 
   const handleRegister = async () => {
     if (!name || !email || !password) {
@@ -35,6 +24,9 @@ export default function Register() {
       setLoading(true);
       const result = await registerWithEmail(name.trim(), email.trim(), password);
       if (result) {
+        // Faz logout imediatamente após criar a conta
+        await signOut();
+        Alert.alert('Sucesso', 'Conta criada com sucesso! Faça login para continuar.');
         router.replace('/login');
       }
     } catch (error) {
